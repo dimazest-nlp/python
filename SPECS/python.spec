@@ -1,3 +1,7 @@
+%if 0%{?copr_username:1}
+%global scl %{copr_username}-%{copr_projectname}
+%endif
+
 # ======================================================
 # Conditionals and other variables controlling the build
 # ======================================================
@@ -77,7 +81,7 @@
 
 # We want to byte-compile the .py files within the packages using the new
 # python3 binary.
-# 
+#
 # Unfortunately, rpmbuild's infrastructure requires us to jump through some
 # hoops to avoid byte-compiling with the system python 2 version:
 #   /usr/lib/rpm/redhat/macros sets up build policy that (amongst other things)
@@ -131,7 +135,7 @@
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: %{?scl_prefix}python
 Version: %{pybasever}.2
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -158,7 +162,11 @@ BuildRequires: gdbm-devel
 %endif
 BuildRequires: glibc-devel
 BuildRequires: gmp-devel
+%if 0%{?fedora} >= 20
 BuildRequires: libdb-devel
+%else
+BuildRequires: db4-devel
+%endif
 BuildRequires: libffi-devel
 BuildRequires: libGL-devel
 BuildRequires: libX11-devel
@@ -718,7 +726,7 @@ Requires: %{?scl_prefix}%{pkg_name}%{?_isa} = %{version}-%{release}
 Conflicts: %{?scl_prefix}%{pkg_name} < %{version}-%{release}
 
 %description devel
-This package contains libraries and header files used to build applications 
+This package contains libraries and header files used to build applications
 with and native libraries for Python 3
 
 %package tools
@@ -972,7 +980,7 @@ exit 1
 # Define a function, for how to perform a "build" of python for a given
 # configuration:
 BuildPython() {
-  ConfName=$1	      
+  ConfName=$1
   BinaryName=$2
   SymlinkName=$3
   ExtraConfigArgs=$4
@@ -1060,7 +1068,7 @@ mkdir -p %{buildroot}%{_prefix} %{buildroot}%{_mandir}
 
 InstallPython() {
 
-  ConfName=$1	      
+  ConfName=$1
   PyInstSoName=$2
   MoreCFlags=$3
 
@@ -1245,7 +1253,7 @@ find %{buildroot}/ -name \*.py -exec sed -i 's/\r//' {} \;
 # Fix an encoding:
 iconv -f iso8859-1 -t utf-8 %{buildroot}/%{pylibdir}/Demo/rpc/README > README.conv && mv -f README.conv %{buildroot}/%{pylibdir}/Demo/rpc/README
 
-# Note that 
+# Note that
 #  %{pylibdir}/Demo/distutils/test2to3/setup.py
 # is in iso-8859-1 encoding, and that this is deliberate; this is test data
 # for the 2to3 tool, and one of the functions of the 2to3 tool is to fixup
@@ -1292,7 +1300,7 @@ for Module in %{buildroot}/%{dynload_dir}/*.so ; do
     *.%{SOABI_debug})
         ldd $Module | grep %{py_INSTSONAME_optimized} &&
             (echo Debug module $Module linked against optimized %{py_INSTSONAME_optimized} ; exit 1)
-            
+
         ;;
     *.%{SOABI_optimized})
         ldd $Module | grep %{py_INSTSONAME_debug} &&
@@ -1377,7 +1385,7 @@ export topdir=$(pwd)
 # => Disabling test before finding a better solution.
 mv Lib/test/test_gdb.py Lib/test/test_gdb.py.notest
 CheckPython() {
-  ConfName=$1	      
+  ConfName=$1
   ConfDir=$(pwd)/build/$ConfName
 
   echo STARTING: CHECKING OF PYTHON FOR CONFIGURATION: $ConfName
@@ -1797,15 +1805,15 @@ rm -fr %{buildroot}
 
 # We put the debug-gdb.py file inside /usr/lib/debug to avoid noise from
 # ldconfig (rhbz:562980).
-# 
+#
 # The /usr/lib/rpm/redhat/macros defines %__debug_package to use
 # debugfiles.list, and it appears that everything below /usr/lib/debug and
 # (/usr/src/debug) gets added to this file (via LISTFILES) in
 # /usr/lib/rpm/find-debuginfo.sh
-# 
+#
 # Hence by installing it below /usr/lib/debug we ensure it is added to the
 # -debuginfo subpackage
-# (if it doesn't, then the rpmbuild ought to fail since the debug-gdb.py 
+# (if it doesn't, then the rpmbuild ought to fail since the debug-gdb.py
 # payload file would be unpackaged)
 
 
@@ -1814,6 +1822,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Sun Aug 17 2014 Dmitrijs Milajevs <dimazest@gmail.com> - 3.3.2-13
+- Copr support.
+
 * Thu Mar 20 2014 Matej Stuchlik <mstuchli@redhat.com> - 3.3.2-12
 - Create a "python" man page
 Resolves: rhbz#1072522
@@ -2027,7 +2038,7 @@ ppc to avoid aliasing violations (patch 130; rhbz#698726)
 - add %%python3_version to the rpm macros (rhbz#719082)
 
 * Mon Jul 11 2011 Dennis Gilmore <dennis@ausil.us> - 3.2.1-2
-- disable some tests on sparc arches 
+- disable some tests on sparc arches
 
 * Mon Jul 11 2011 David Malcolm <dmalcolm@redhat.com> - 3.2.1-1
 - 3.2.1; refresh lib64 patch (102), subprocess unit test patch (129), disabling
